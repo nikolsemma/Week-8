@@ -1,0 +1,69 @@
+---
+title: "Week 8"
+author: "Nikols"
+date: "2026-10-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##Week 8: PGLS
+
+```{r}
+library(phangorn)
+library(readr)
+library(ape)
+library(nlme)
+library(geiger)
+```
+```{r}
+setwd("~/Desktop/Stats")
+trees_file <- "output.nex"
+trees <- read.nexus(trees_file)
+consensus_tree <- ls.consensus(trees) #least squares consensus analysis
+plot(consensus_tree)
+```
+```{r}
+trait_data <- read_csv("AVONET Supplementary dataset 1.csv")
+trait_data$Species3 <- gsub(" ","_",trait_data$Species3)
+rownames(trait_data) <- trait_data$Species3
+View(trait_data)
+```
+```{r}
+#Have to filter the data set so that it only contains the 50 relevant species and their associated traits (list of species is the same as the following list of tip labels in the consensus tree generated above)
+consensus_tree$tip.label
+```
+```{r}
+filter_trait_data <- trait_data[trait_data$Species3 %in% consensus_tree$tip.label, ]
+rownames(filter_trait_data) <- filter_trait_data$Species3
+head(trait_data)
+head(filter_trait_data)
+```
+
+```{r}
+name.check(consensus_tree, filter_trait_data)
+```
+```{r}
+bm<-corBrownian(1, consensus_tree)
+bm
+```
+```{r}
+mod1 <- gls(Tail.Length~Mass, data=filter_trait_data, correlation=bm)
+summary(mod1)
+```
+```{r}
+mod2<-gls(Tail.Length~Mass, data=filter_trait_data, correlation=corPagel(1,consensus_tree))
+summary(mod2)
+```
+```{r}
+mod3<-gls(Tail.Length~Mass+Wing.Length, data=filter_trait_data, correlation=corPagel(1,consensus_tree))
+summary(mod3)
+```
+```{r}
+library(caper)
+comp.data <- comparative.data(consensus_tree, filter_trait_data, names.col="Species3", vcv.dim=2, warn.dropped=TRUE)
+mod4<-pgls(Tail.Length~Mass, data=comp.data)
+summary(mod4)
+```
+
