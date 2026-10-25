@@ -39,7 +39,6 @@ consensus_tree$tip.label
 ```{r}
 filter_trait_data <- trait_data[trait_data$Species3 %in% consensus_tree$tip.label, ]
 rownames(filter_trait_data) <- filter_trait_data$Species3
-treedata(phy = consensus_tree, data = filter_trait_data)
 data <- as.data.frame(filter_trait_data)
 rownames(data) <- data$Species3
 name.check(consensus_tree, data)
@@ -66,8 +65,8 @@ summary(mod3)
 ```
 ```{r}
 library(caper)
-dfdata <- as.data.frame(filter_trait_data)
-comp.data <- comparative.data(consensus_tree, dfdata, names.col="Species3", vcv.dim = 2, warn.dropped = TRUE, na.omit = FALSE)
+data <- as.data.frame(filter_trait_data)
+comp.data <- comparative.data(consensus_tree, data, names.col="Species3", vcv.dim = 2, warn.dropped = TRUE, na.omit = FALSE)
 mod4<-pgls(Tail.Length~Mass, data=comp.data)
 summary(mod4)
 ```
