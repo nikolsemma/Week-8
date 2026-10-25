@@ -2,7 +2,9 @@
 title: "Week 8"
 author: "Nikols"
 date: "2026-10-20"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +23,7 @@ library(geiger)
 setwd("~/Desktop/Stats")
 trees_file <- "output.nex"
 trees <- read.nexus(trees_file)
-consensus_tree <- ls.consensus(trees) #least squares consensus analysis
+consensus_tree <- ls.consensus(trees, rooted = T) #least squares consensus analysis
 plot(consensus_tree)
 ```
 ```{r}
@@ -37,8 +39,10 @@ consensus_tree$tip.label
 ```{r}
 filter_trait_data <- trait_data[trait_data$Species3 %in% consensus_tree$tip.label, ]
 rownames(filter_trait_data) <- filter_trait_data$Species3
-head(trait_data)
-head(filter_trait_data)
+treedata(phy = consensus_tree, data = filter_trait_data)
+data <- as.data.frame(filter_trait_data)
+rownames(data) <- data$Species3
+name.check(consensus_tree, data)
 ```
 
 ```{r}
@@ -49,7 +53,7 @@ bm<-corBrownian(1, consensus_tree)
 bm
 ```
 ```{r}
-mod1 <- gls(Tail.Length~Mass, data=filter_trait_data, correlation=bm)
+mod1 <- gls(Tail.Length~Mass, data=filter_trait_data, correlation=bm, na.action = na.omit)
 summary(mod1)
 ```
 ```{r}
@@ -62,8 +66,22 @@ summary(mod3)
 ```
 ```{r}
 library(caper)
-comp.data <- comparative.data(consensus_tree, filter_trait_data, names.col="Species3", vcv.dim=2, warn.dropped=TRUE)
+dfdata <- as.data.frame(filter_trait_data)
+comp.data <- comparative.data(consensus_tree, dfdata, names.col="Species3", vcv.dim = 2, warn.dropped = TRUE, na.omit = FALSE)
 mod4<-pgls(Tail.Length~Mass, data=comp.data)
 summary(mod4)
+```
+
+```{r}
+mod5<-pgls(Tail.Length~Mass, data=comp.data, lambda="ML")
+summary(mod5)
+```
+```{r}
+mod6<-pgls(Tail.Length~Mass+Wing.Length, data=comp.data, lambda="ML")
+summary(mod6)
+```
+```{r}
+lm.lk<-pgls.profile(mod6, which="lambda")
+plot(lm.lk)
 ```
 
